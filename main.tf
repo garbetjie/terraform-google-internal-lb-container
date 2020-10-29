@@ -3,7 +3,7 @@ resource random_id default_prefix {
 }
 
 resource google_compute_address loadbalancer {
-  name = local.prefix
+  name = local.name_prefix
   region = var.region
   address_type = "INTERNAL"
   purpose = "SHARED_LOADBALANCER_VIP"
@@ -13,7 +13,7 @@ resource google_compute_address loadbalancer {
 resource google_compute_forwarding_rule tcp {
   count = length(local.tcp_ports) > 0 ? 1 : 0
 
-  name = "${local.prefix}-tcp"
+  name = "${local.name_prefix}-tcp"
   region = var.region
   load_balancing_scheme = "INTERNAL"
   backend_service = google_compute_region_backend_service.tcp[0].self_link
@@ -26,7 +26,7 @@ resource google_compute_forwarding_rule tcp {
 resource google_compute_forwarding_rule udp {
   count = length(local.udp_ports) > 0 ? 1 : 0
 
-  name = "${local.prefix}-udp"
+  name = "${local.name_prefix}-udp"
   region = var.region
   load_balancing_scheme = "INTERNAL"
   backend_service = google_compute_region_backend_service.udp[0].self_link
@@ -40,7 +40,7 @@ resource google_compute_forwarding_rule udp {
 resource google_compute_region_backend_service tcp {
   count = length(local.tcp_ports) > 0 ? 1 : 0
 
-  name = "${local.prefix}-tcp"
+  name = "${local.name_prefix}-tcp"
   protocol = "TCP"
   region = var.region
   health_checks = [google_compute_health_check.load_balancer.self_link]
@@ -54,7 +54,7 @@ resource google_compute_region_backend_service tcp {
 resource google_compute_region_backend_service udp {
   count = length(local.udp_ports) > 0 ? 1 : 0
 
-  name = "${local.prefix}-udp"
+  name = "${local.name_prefix}-udp"
   protocol = "UDP"
   region = var.region
   load_balancing_scheme = "INTERNAL"
@@ -66,10 +66,19 @@ resource google_compute_region_backend_service udp {
 }
 
 resource google_compute_region_instance_group_manager fluentd {
-  base_instance_name = local.prefix
-  name = local.prefix
+  base_instance_name = local.name_prefix
+  name = local.name_prefix
   target_size = var.replicas
   region = var.region
+
+  update_policy {
+    type = "PROACTIVE"
+    minimal_action = "REPLACE"
+    instance_redistribution_type = "PROACTIVE"
+    max_surge_fixed = length(data.google_compute_zones.available_zones.names)
+    max_unavailable_fixed = 0
+    min_ready_sec = 60
+  }
 
   auto_healing_policies {
     health_check = google_compute_health_check.instance_group.self_link
@@ -82,11 +91,11 @@ resource google_compute_region_instance_group_manager fluentd {
 }
 
 resource google_compute_instance_template template {
-  name_prefix = "${local.prefix}-"
+  name_prefix = "${local.name_prefix}-"
   machine_type = var.machine_type
   labels = var.labels
   region = var.region
-  tags = distinct(concat(var.network_tags, ["${local.prefix}-fw"]))
+  tags = distinct(concat(var.network_tags, ["${local.name_prefix}-fw"]))
 
   metadata = {
     "user-data" = "#cloud-config\n${yamlencode(local.cloud_init_config)}"

@@ -1,5 +1,5 @@
 resource google_compute_health_check load_balancer {
-  name = "${local.prefix}-lb"
+  name = "${local.name_prefix}-lb"
   check_interval_sec = 3
   timeout_sec = 2
   unhealthy_threshold = 2
@@ -11,7 +11,7 @@ resource google_compute_health_check load_balancer {
 }
 
 resource google_compute_health_check instance_group {
-  name = "${local.prefix}-ig"
+  name = "${local.name_prefix}-ig"
   check_interval_sec = 30
   unhealthy_threshold = 3
   healthy_threshold = 1

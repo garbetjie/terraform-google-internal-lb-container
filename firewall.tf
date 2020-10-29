@@ -1,8 +1,8 @@
 resource google_compute_firewall health_checks {
-  name = local.prefix
+  name = local.name_prefix
   source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
   network = "default"
-  target_tags = ["${local.prefix}-fw"]
+  target_tags = ["${local.name_prefix}-fw"]
 
   allow {
     protocol = "TCP"

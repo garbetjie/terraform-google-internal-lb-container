@@ -6,7 +6,7 @@ variable image {
   type = string
 }
 
-variable prefix {
+variable name_prefix {
   type = string
   default = null
 }
@@ -77,7 +77,7 @@ variable volumes {
 }
 
 locals {
-  prefix = var.prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : var.prefix
+  name_prefix = var.name_prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : var.name_prefix
 
   tcp_ports = [
     for pair in var.ports:
