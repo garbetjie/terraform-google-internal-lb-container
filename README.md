@@ -15,6 +15,10 @@ module my_lb {
   source = "garbetjie/internal-lb-container/google"
   region = "europe-west1"
   image = "nginx:latest"
+  ports = [
+    { protocol = "udp", port = 8080 },
+    { protocol = "tcp", port = 8080 }
+  ]
 }
 ```
 
@@ -24,9 +28,9 @@ module my_lb {
 |------------------------|-----------------------------------------------------------------------------------|------------------------------------------------|----------------------------------------------------------|----------|
 | region                 | Name of the region in which to create resources.                                  | string                                         |                                                          | Yes      |
 | image                  | Docker image to run.                                                              | string                                         |                                                          | Yes      |
+| ports                  | Ports to expose from the container.                                               | list(object({ protocol=string, port=number })) |                                                          | Yes      |
 | name_prefix            | Prefix to give to the names of all created resources. Trailing `-`'s are removed. | string                                         | `"i-lb-c-${random_id.default_prefix.hex}-${var.region}"` | No       |
 | env                    | Environment variables to inject into the running container.                       | map(string)                                    | `{}`                                                     | No       |
-| ports                  | Ports to expose from the container.                                               | list(object({ protocol=string, port=number })) | `[]`                                                     | No       |
 | machine_type           | GCE instance type to run the container on.                                        | string                                         | `f1-micro`                                               | No       |
 | disk_type              | Disk type to create the GCE instances with.                                       | string                                         | `pd-standard`                                            | No       |
 | disk_size              | Disk size to create the GCE instances with.                                       | number                                         | `15`                                                     | No       |

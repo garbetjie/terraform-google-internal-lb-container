@@ -8,6 +8,11 @@ variable image {
   description = "Docker image to run."
 }
 
+variable ports {
+  type = list(object({ protocol = string, port = number }))
+  description = "Ports to expose from the container."
+}
+
 variable name_prefix {
   type = string
   default = null
@@ -18,12 +23,6 @@ variable env {
   type = map(string)
   default = {}
   description = "Environment variables to inject into the running container."
-}
-
-variable ports {
-  type = list(object({ protocol = string, port = number }))
-  default = []
-  description = "Ports to expose from the container."
 }
 
 variable machine_type {
