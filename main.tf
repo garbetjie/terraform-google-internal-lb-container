@@ -1,3 +1,7 @@
+resource random_id default_prefix {
+  byte_length = 2
+}
+
 resource google_compute_address loadbalancer {
   name = local.prefix
   region = var.region
@@ -81,7 +85,8 @@ resource google_compute_instance_template template {
   name_prefix = "${local.prefix}-"
   machine_type = var.machine_type
   labels = var.labels
-  tags = concat(var.network_tags, ["${local.prefix}-fw"])
+  region = var.region
+  tags = distinct(concat(var.network_tags, ["${local.prefix}-fw"]))
 
   metadata = {
     "user-data" = "#cloud-config\n${yamlencode(local.cloud_init_config)}"
