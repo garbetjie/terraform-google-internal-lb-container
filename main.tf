@@ -95,7 +95,7 @@ resource google_compute_instance_template template {
   machine_type = var.machine_type
   labels = var.labels
   region = var.region
-  tags = distinct(concat(var.network_tags, ["${local.name_prefix}-fw"]))
+  tags = distinct(concat(var.tags, ["${local.name_prefix}-fw"]))
 
   metadata = {
     "user-data" = "#cloud-config\n${yamlencode(local.cloud_init_config)}"
