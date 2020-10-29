@@ -121,4 +121,8 @@ resource google_compute_instance_template template {
     labels = var.labels
     source_image = "cos-cloud/cos-stable"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
