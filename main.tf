@@ -1,118 +1,110 @@
-data google_compute_zones available_zones {
-  for_each = var.regions
-  region = each.value
+resource google_compute_address loadbalancer {
+  name = local.prefix
+  region = var.region
+  address_type = "INTERNAL"
+  purpose = "SHARED_LOADBALANCER_VIP"
+  provider = google-beta
 }
 
-resource random_shuffle available_zones {
-  for_each = var.regions
-  input = data.google_compute_zones.available_zones[each.key].names
-  result_count = 1
+resource google_compute_forwarding_rule tcp {
+  count = length(local.tcp_ports) > 0 ? 1 : 0
 
-  keepers = {
-    region = each.value
+  name = "${local.prefix}-tcp"
+  region = var.region
+  load_balancing_scheme = "INTERNAL"
+  backend_service = google_compute_region_backend_service.tcp[0].self_link
+  all_ports = var.all_ports
+  network = "default"
+  ip_address = google_compute_address.loadbalancer.address
+  allow_global_access = var.allow_global_access
+}
+
+resource google_compute_forwarding_rule udp {
+  count = length(local.udp_ports) > 0 ? 1 : 0
+
+  name = "${local.prefix}-udp"
+  region = var.region
+  load_balancing_scheme = "INTERNAL"
+  backend_service = google_compute_region_backend_service.udp[0].self_link
+  all_ports = var.all_ports
+  network = "default"
+  ip_address = google_compute_address.loadbalancer.address
+  ip_protocol = "UDP"
+  allow_global_access = var.allow_global_access
+}
+
+resource google_compute_region_backend_service tcp {
+  count = length(local.tcp_ports) > 0 ? 1 : 0
+
+  name = "${local.prefix}-tcp"
+  protocol = "TCP"
+  region = var.region
+  health_checks = [google_compute_health_check.load_balancer.self_link]
+  load_balancing_scheme = "INTERNAL"
+
+  backend {
+    group = google_compute_region_instance_group_manager.fluentd.instance_group
   }
 }
 
-resource random_id fluentd_instance_name_suffix {
-  for_each = var.regions
-  byte_length = 2
+resource google_compute_region_backend_service udp {
+  count = length(local.udp_ports) > 0 ? 1 : 0
 
-  keepers = {
-    region = each.value
-    disk_size = var.disk_size
-    disk_type = var.disk_type
-    machine_type = var.machine_type
-    cloud_init_config = local.cloud_init_config
-    service_account_email = google_service_account.fluentd.email
+  name = "${local.prefix}-udp"
+  protocol = "UDP"
+  region = var.region
+  load_balancing_scheme = "INTERNAL"
+  health_checks = [google_compute_health_check.load_balancer.self_link]
+
+  backend {
+    group = google_compute_region_instance_group_manager.fluentd.instance_group
   }
 }
 
-resource google_compute_instance fluentd {
-  for_each = var.regions
-  name = "fluentd-${each.value}-${random_id.fluentd_instance_name_suffix[each.key].hex}"
-  machine_type = random_id.fluentd_instance_name_suffix[each.key].keepers.machine_type
-  zone = local.regions_to_zones[each.value]
-  tags = ["requires-nat-${each.value}", "fluentd-${each.value}"]
+resource google_compute_region_instance_group_manager fluentd {
+  base_instance_name = local.prefix
+  name = local.prefix
+  target_size = var.replicas
+  region = var.region
 
-  service_account {
-    email = random_id.fluentd_instance_name_suffix[each.key].keepers.service_account_email
-    scopes = ["cloud-platform"]
+  auto_healing_policies {
+    health_check = google_compute_health_check.instance_group.self_link
+    initial_delay_sec = 60
   }
+
+  version {
+    instance_template = google_compute_instance_template.template.self_link
+  }
+}
+
+resource google_compute_instance_template template {
+  name_prefix = "${local.prefix}-"
+  machine_type = var.machine_type
+  labels = var.labels
+  tags = concat(var.network_tags, ["${local.prefix}-fw"])
 
   metadata = {
-    "user-data" = "#cloud-config\n${random_id.fluentd_instance_name_suffix[each.key].keepers.cloud_init_config}"
+    "user-data" = "#cloud-config\n${yamlencode(local.cloud_init_config)}"
   }
 
   network_interface {
     network = "default"
   }
 
-  boot_disk {
-    initialize_params {
-      image = "cos-cloud/cos-stable"
-      size = random_id.fluentd_instance_name_suffix[each.key].keepers.disk_size
-      type = random_id.fluentd_instance_name_suffix[each.key].keepers.disk_type
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource google_compute_instance_group fluentd {
-  for_each = var.regions
-  name = "fluentd"
-  zone = local.regions_to_zones[each.value]
-  instances = [google_compute_instance.fluentd[each.key].self_link]
-}
-
-resource google_compute_address load_balancer {
-  for_each = var.regions
-  name = "fluentd-load-balancer"
-  description = "IP address for internal load balancer for forwarding logs to BigQuery"
-  address_type = "INTERNAL"
-  region = each.value
-}
-
-resource google_compute_forwarding_rule fluentd {
-  for_each = var.regions
-  name = "fluentd"
-  region = each.value
-  load_balancing_scheme = "INTERNAL"
-  backend_service = google_compute_region_backend_service.fluentd[each.value].self_link
-  all_ports = true
-  network = "default"
-  ip_address = google_compute_address.load_balancer[each.key].address
-}
-
-resource google_compute_region_backend_service fluentd {
-  for_each = var.regions
-  name = "fluentd"
-  protocol = "TCP"
-  health_checks = [google_compute_health_check.fluentd.self_link]
-  region = each.value
-  load_balancing_scheme = "INTERNAL"
-
-  backend {
-    group = google_compute_instance_group.fluentd[each.key].self_link
-  }
-}
-
-resource google_compute_health_check fluentd {
-  name = "fluentd"
-
-  dynamic "tcp_health_check" {
-    for_each = local.ports
+  dynamic "service_account" {
+    for_each = var.service_account_email != null ? [var.service_account_email] : []
     content {
-      port = tcp_health_check.value
+      email = service_account.value
+      scopes = var.service_account_scopes
     }
   }
-}
 
-output load_balancer_addresses {
-  value = {
-  for key, value in var.regions:
-  value => google_compute_address.load_balancer[value].address
+  disk {
+    auto_delete = true
+    boot = true
+    disk_size_gb = var.disk_size
+    disk_type = var.disk_type
+    labels = var.labels
+    source_image = "cos-cloud/cos-stable"
   }
 }

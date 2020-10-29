@@ -1,9 +1,18 @@
-variable regions {
-  type = set(string)
+variable region {
+  type = string
 }
 
-variable additional_allowed_source_ranges {
-  type = list(string)
+variable image {
+  type = string
+}
+
+variable prefix {
+  type = string
+  default = null
+}
+
+variable ports {
+  type = list(object({ protocol = string, port = number }))
   default = []
 }
 
@@ -22,15 +31,57 @@ variable disk_size {
   default = 15
 }
 
+variable network_tags {
+  type = set(string)
+  default = []
+}
+
+variable labels {
+  type = map(string)
+  default = {}
+}
+
+variable service_account_email {
+  type = string
+  default = null
+}
+
+variable replicas {
+  type = number
+  default = 1
+}
+
+variable service_account_scopes {
+  type = set(string)
+  default = ["cloud-platform"]
+}
+
+variable allow_global_access {
+  type = bool
+  default = true
+}
+
+variable all_ports {
+  type = bool
+  default = true
+}
+
 locals {
-  regions_to_zones = {
-    for index, value in var.regions:
-      value => random_shuffle.available_zones[index].result[0]
-  }
+  prefix = var.prefix == null ? "fluentd-${var.region}" : var.prefix
 
-  ports = [20001]
+  tcp_ports = [
+    for pair in var.ports:
+      pair.port
+    if lower(pair.protocol) == "tcp"
+  ]
 
-  cloud_init_config = yamlencode({
+  udp_ports = [
+    for pair in var.ports:
+      pair.port
+    if lower(pair.protocol) == "udp"
+  ]
+
+  cloud_init_config = {
     write_files = [
       {
         path = "/home/run_fluentd.sh"
@@ -39,5 +90,5 @@ locals {
       }
     ]
     runcmd = ["sh /home/run_fluentd.sh"]
-  })
+  }
 }
