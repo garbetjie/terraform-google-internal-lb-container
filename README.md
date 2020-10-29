@@ -2,7 +2,7 @@ Terraform Module: Internal Load Balancer (Container)
 ----------------------------------------------------
 
 A Terraform module for [Google Cloud Platform](https://cloud.google.com/) that makes it easy to start up a Docker image
-behind an internal TCP load balancer.
+behind an internal TCP/UDP load balancer.
 
 When applied, this module will create an internal TCP load balancer, as well as a regional managed instance group having
 all the required health checks to ensure instances are automatically healed. 
