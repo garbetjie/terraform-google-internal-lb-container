@@ -77,7 +77,7 @@ variable volumes {
 }
 
 locals {
-  name_prefix = var.name_prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : var.name_prefix
+  name_prefix = var.name_prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : replace(var.name_prefix, "/-+$/", "")
 
   tcp_ports = [
     for pair in var.ports:
