@@ -11,6 +11,11 @@ variable prefix {
   default = null
 }
 
+variable env {
+  type = map(string)
+  default = {}
+}
+
 variable ports {
   type = list(object({ protocol = string, port = number }))
   default = []
@@ -32,7 +37,7 @@ variable disk_size {
 }
 
 variable network_tags {
-  type = set(string)
+  type = list(string)
   default = []
 }
 
@@ -66,8 +71,13 @@ variable all_ports {
   default = true
 }
 
+variable volumes {
+  type = map(string)
+  default = {}
+}
+
 locals {
-  prefix = var.prefix == null ? "fluentd-${var.region}" : var.prefix
+  prefix = var.prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : var.prefix
 
   tcp_ports = [
     for pair in var.ports:
@@ -84,11 +94,16 @@ locals {
   cloud_init_config = {
     write_files = [
       {
-        path = "/home/run_fluentd.sh"
+        path = "/home/run.sh"
         permissions = "0755"
-        content = file("${path.module}/run_fluentd.sh")
+        content = templatefile("${path.module}/run.sh", {
+          image = var.image,
+          ports = var.ports
+          volumes = var.volumes
+          env = var.env
+        })
       }
     ]
-    runcmd = ["sh /home/run_fluentd.sh"]
+    runcmd = ["sh /home/run.sh"]
   }
 }
