@@ -47,7 +47,7 @@ resource google_compute_region_backend_service tcp {
   load_balancing_scheme = "INTERNAL"
 
   backend {
-    group = google_compute_region_instance_group_manager.fluentd.instance_group
+    group = google_compute_region_instance_group_manager.manager.instance_group
   }
 }
 
@@ -61,11 +61,11 @@ resource google_compute_region_backend_service udp {
   health_checks = [google_compute_health_check.load_balancer.self_link]
 
   backend {
-    group = google_compute_region_instance_group_manager.fluentd.instance_group
+    group = google_compute_region_instance_group_manager.manager.instance_group
   }
 }
 
-resource google_compute_region_instance_group_manager fluentd {
+resource google_compute_region_instance_group_manager manager {
   base_instance_name = local.name_prefix
   name = local.name_prefix
   target_size = var.replicas
