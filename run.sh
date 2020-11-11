@@ -8,7 +8,7 @@ docker run \
   -d \
   --rm \
   --name run \
-  --log-driver syslog \
+  --log-driver journald \
   %{ for key, val in env ~}-e ${key}=${val} \
   %{ endfor ~}
 %{ for pair in ports ~}-p ${pair.port}:${pair.port}${lower(pair.protocol) == "udp" ? "/udp" : ""} \
