@@ -42,6 +42,7 @@ module my_lb {
 | allow_global_access    | Allow traffic to the load balancer from other regions.                            | bool                                           | `true`                                                   | No       |
 | all_ports              | Expose all ports on the load balancer, rather than just the specified ones.       | bool                                           | `true`                                                   | No       |
 | volumes                | Volumes to mount into the container.                                              | map(string)                                    | `{}`                                                     | No       |
+| always_pull            | Always pull the image before running it.                                          | bool                                           | `false`                                                  | No       |
 
 ## Outputs
 
