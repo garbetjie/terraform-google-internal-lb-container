@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 
+%{ if always_pull ~}
+# Pull the image first.
+docker pull ${image}
+%{ endif ~}
+
 # Remove the container if there is one already.
+docker stop run
 docker rm -f run
 
 # Run the container.

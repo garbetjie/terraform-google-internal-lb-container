@@ -91,6 +91,12 @@ variable volumes {
   description = "Volumes to mount into the container."
 }
 
+variable always_pull {
+  type = bool
+  default = false
+  description = "Always pull the image before running it."
+}
+
 locals {
   name_prefix = var.name_prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : replace(var.name_prefix, "/-+$/", "")
 
@@ -116,6 +122,7 @@ locals {
           ports = var.ports
           volumes = var.volumes
           env = var.env
+          always_pull = var.always_pull
         })
       }
     ]
