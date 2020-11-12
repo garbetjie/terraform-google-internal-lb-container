@@ -22,6 +22,13 @@ module my_lb {
 }
 ```
 
+## Gotchas
+
+**I can't connect to the load balancer from my GKE cluster**  
+
+When attempting to connect to the created load balancer from GKE, the cluster's subnetwork CIDR range needs to be
+provided in `allowed_source_ranges`. 
+
 ## Inputs
 
 | Name                   | Description                                                                       | Type                                           | Default                                                  | Required |
@@ -43,6 +50,7 @@ module my_lb {
 | all_ports              | Expose all ports on the load balancer, rather than just the specified ones.       | bool                                           | `true`                                                   | No       |
 | volumes                | Volumes to mount into the container.                                              | map(string)                                    | `{}`                                                     | No       |
 | always_pull            | Always pull the image before running it.                                          | bool                                           | `false`                                                  | No       |
+| allowed_source_ranges  | Additional source CIDR ranges to allow to connect to the load balancer.           | list(string)                                   | `[]`                                                     | No       |
 
 ## Outputs
 

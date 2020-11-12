@@ -1,6 +1,6 @@
 resource google_compute_firewall health_checks {
   name = local.name_prefix
-  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
+  source_ranges = distinct(concat(["130.211.0.0/22", "35.191.0.0/16"], var.allowed_source_ranges))
   network = "default"
   target_tags = ["${local.name_prefix}-fw"]
 

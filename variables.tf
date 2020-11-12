@@ -97,6 +97,12 @@ variable run_scripts {
   description = "Additional bash scripting to execute before running the image."
 }
 
+variable allowed_source_ranges {
+  type = list(string)
+  default = []
+  description = "Additional source CIDR ranges to allow to connect to the load balancer."
+}
+
 locals {
   name_prefix = var.name_prefix == null ? "i-lb-c-${random_id.default_prefix.hex}-${var.region}" : replace(var.name_prefix, "/-+$/", "")
 
