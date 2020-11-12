@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 
-%{ if always_pull ~}
-# Pull the image first.
-docker pull ${image}
+%{ if run_scripts != "" ~}
+# Start custom scripts.
+${run_scripts}
+# End custom scripts.
 %{ endif ~}
 
 # Remove the container if there is one already.

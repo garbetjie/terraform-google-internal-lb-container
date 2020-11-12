@@ -91,10 +91,10 @@ variable volumes {
   description = "Volumes to mount into the container."
 }
 
-variable always_pull {
-  type = bool
-  default = false
-  description = "Always pull the image before running it."
+variable run_scripts {
+  type = string
+  default = ""
+  description = "Additional bash scripting to execute before running the image."
 }
 
 locals {
@@ -122,7 +122,7 @@ locals {
           ports = var.ports
           volumes = var.volumes
           env = var.env
-          always_pull = var.always_pull
+          run_scripts = var.run_scripts
         })
       }
     ]
